@@ -67,12 +67,14 @@ class TuneClassifSub(TuneClassif):
                 nn.AvgPool2d(feature_size2d, stride=1)
             )
         # convolutionalize the linear layers in classifier
+        count = 0
         for name, module in self.classifier._modules.items():
             if isinstance(module, nn.modules.linear.Linear):
                 size2d = feature_size2d
-                if reduc_count > 0 or module is not self.classifier[0]:
+                if reduc_count > 0 or count > 0:
                     size2d = (1, 1)
                 self.classifier._modules[name] = convolutionalize(module, size2d)
+                count += 1
 
     def forward(self, x):
         x = self.features(x)
@@ -198,12 +200,14 @@ class Siamese2(nn.Module):
                 nn.AvgPool2d(feature_size2d, stride=1)
             )
         # convolutionalize the linear layers in classifier
+        count = 0
         for name, module in self.classifier._modules.items():
             if isinstance(module, nn.modules.linear.Linear):
                 size2d = feature_size2d
-                if reduc_count > 0 or module is not self.classifier[0]:
+                if reduc_count > 0 or count > 0:
                     size2d = (1, 1)
                 self.classifier._modules[name] = convolutionalize(module, size2d)
+                count += 1
         set_untrained_blocks([self.features, self.classifier], untrained)
         self.feature_reduc1 = nn.Sequential(
             NormalizeL2(),
