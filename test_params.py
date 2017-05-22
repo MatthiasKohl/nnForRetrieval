@@ -101,7 +101,7 @@ class TestParams(object):
         self.uuid = datetime.now()
 
         # general parameters
-        self.dataset_full = 'data/pre_proc/fourviere_clean2_224sq'
+        self.dataset_full = 'data/pre_proc/CLICIDE_video_384'
         self.cnn_model = models.alexnet
         self.cuda_device = 1
         self.save_dir = 'data'
@@ -126,9 +126,9 @@ class TestParams(object):
 
         # Classification net general and test params
         self.classif_bn_model = ''
-        self.classif_preload_net = ''
+        self.classif_preload_net = 'data/classif_subparts/20170519-150539-458235_best_classif.pth.tar'
         self.classif_feature_reduc = True
-        self.classif_test_upfront = False
+        self.classif_test_upfront = True
         self.classif_train = False
         self.classif_test_batch_size = 1
         self.classif_test_pre_proc = True
@@ -139,7 +139,7 @@ class TestParams(object):
 
         # Classification net training params
         self.classif_train_mode = 'subparts'
-        self.classif_train_epochs = 100
+        self.classif_train_epochs = 50
         self.classif_train_batch_size = 32
         self.classif_train_micro_batch = 1
         self.classif_train_aug_rot = r = 180
@@ -153,11 +153,11 @@ class TestParams(object):
         # for subparts, transformation for each scale
         self.classif_train_trans = [trans, trans]
         self.classif_train_pre_proc = [False, False]
-        self.classif_lr = 5e-3
+        self.classif_lr = 1e-3
         self.classif_momentum = 0.9
         self.classif_weight_decay = 5e-4
         self.classif_optim = 'SGD'
-        self.classif_annealing = {60: 0.1}
+        self.classif_annealing = {30: 0.1}
         self.classif_loss_avg = True
         self.classif_loss_int = 10
         self.classif_test_int = 0
@@ -173,22 +173,22 @@ class TestParams(object):
         self.classif_train_sub_scales = [transforms.Compose([]), transforms.Compose([affine_scale_noisy_cv(2.)])]
 
         # settings for feature net constructed from classification net
-        self.feature_net_upfront = False
+        self.feature_net_upfront = True
         self.feature_net_use_class_net = True
         self.feature_net_average = False
         self.feature_net_classify = True
 
         # Siamese net general and testing params
-        self.siam_model = ''
+        self.siam_model = 'siam2'
         self.siam_preload_net = ''
         self.siam_test_upfront = True
-        self.siam_use_feature_net = False
+        self.siam_use_feature_net = True
         self.siam_train = True
         # TODO should this be the number of instances ?
         self.siam_feature_dim = 2048
         self.siam_conv_average = (1, 1)
         self.siam_cos_margin = 0  # 0: pi/2 angle, 0.5: pi/3, sqrt(3)/2: pi/6
-        self.siam_test_batch_size = 16
+        self.siam_test_batch_size = 1
         self.siam_test_pre_proc = True
         self.siam_test_trans = transforms.Compose([transforms.ToTensor()])
         if not self.test_norm_per_image:
@@ -213,8 +213,8 @@ class TestParams(object):
         self.siam_train_trans = trans
         self.siam_train_pre_proc = False
         self.siam_train_batch_size = 64
-        self.siam_train_micro_batch = 8
-        self.siam_lr = 5e-3
+        self.siam_train_micro_batch = 1
+        self.siam_lr = 1e-3
         self.siam_momentum = 0.9
         self.siam_weight_decay = 0.0
         self.siam_optim = 'SGD'
@@ -230,7 +230,7 @@ class TestParams(object):
         self.siam2_k = 6
 
         # double objective loss params
-        self.siam_double_objective = False
+        self.siam_double_objective = True
         self.siam_do_loss2_alpha = 1.0
         self.siam_do_loss2_avg = True
 
@@ -270,7 +270,7 @@ class TestParams(object):
                 value = fun_str(value)
             f.write('{0}:{1}\n'.format(name, value))
         f.write('\n')
-        f.write(inspect.getsource(sys.modules[__name__]))
+        f.write(inspect.getsource(TestParams))
         # for name, value in sorted(vars(self).items()):
         #     if name == 'uuid' or name in first:
         #         continue

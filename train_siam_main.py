@@ -35,7 +35,9 @@ def get_class_net(labels):
 
 
 def get_feature_net(class_net):
-    if P.feature_net_use_class_net:
+    if P.classif_train_mode == 'subparts':
+        net = class_net
+    elif P.feature_net_use_class_net:
         net = FeatureNet(class_net, P.feature_size2d, P.feature_net_average, P.feature_net_classify)
     else:
         net = FeatureNet(P.cnn_model(pretrained=P.finetuning), P.feature_size2d, P.feature_net_average, P.feature_net_classify)

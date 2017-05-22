@@ -7,7 +7,7 @@ from torch.autograd import Variable
 from os import path
 
 from utils import *
-from model.siamese import Siamese2
+from model.siamese import Siamese2, TuneClassifSub
 from model.custom_modules import NormalizeL2Fun
 from model.nn_utils import set_net_train
 from test_params import P
@@ -55,9 +55,18 @@ def get_embeddings(net, dataset, device, out_size):
             for j in range(n):
                 test_in[j] = test_trans(batch[j][0])
 
-        out = net(Variable(test_in, volatile=True))
+        out = net(Variable(test_in, volatile=True)).data
+        if isinstance(net, TuneClassifSub):
+            max_pred, _ = out.max(1)
+            max_pred1, max_i1 = max_pred.max(2)
+            _, max_i2 = max_pred1.max(3)
+            i2 = max_i2.view(-1)[0]
+            i1 = max_i1.view(-1)[i2]
+            out = out[:, :, i1, i2]
+            out = NormalizeL2Fun()(Variable(out, volatile=True))
+            out = out.data
         for j in range(n):
-            embeddings[i + j] = out.data[j]
+            embeddings[i + j] = out[j]
         return embeddings
 
     init = tensor(device, len(dataset), out_size)
