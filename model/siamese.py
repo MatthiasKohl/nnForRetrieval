@@ -76,11 +76,14 @@ class TuneClassifSub(TuneClassif):
                 self.classifier._modules[name] = convolutionalize(module, size2d)
                 count += 1
 
-    def forward(self, x):
+    def forward_single(self, x):
         x = self.features(x)
         x = self.feature_reduc(x)
         x = self.classifier(x)
         return x
+
+    def forward(self, *scales):
+        return [forward_single(x) for x in scales]
 
 
 class FeatureNet(nn.Module):
