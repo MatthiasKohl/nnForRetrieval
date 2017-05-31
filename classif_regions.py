@@ -22,7 +22,7 @@ from model.custom_modules import NormalizeL2Fun
 # keep labels as global variable. they are initialized after
 # train set has been loaded and then kept constant
 labels = []
-train_type = 'AlexNet Classification sub-regions'
+train_type = P.cnn_model.lower() + ' Classification sub-regions'
 
 
 # test a classifier model. it should be in eval mode
@@ -135,12 +135,15 @@ def get_embeddings(net, dataset, device, out_size):
 
 
 def get_class_net():
+    model = models.alexnet
+    if P.cnn_model.lower() == 'resnet152':
+        model = models.resnet152
     if P.bn_model:
-        bn_model = TuneClassif(models.alexnet(), len(labels), P.feature_size2d)
+        bn_model = TuneClassif(model(), len(labels), P.feature_size2d)
         bn_model.load_state_dict(torch.load(P.bn_model, map_location=lambda storage, location: storage.cpu()))
         # copy_bn_all(net.features, bn_model.features)
     else:
-        bn_model = models.alexnet(pretrained=True)
+        bn_model = model(pretrained=True)
     net = TuneClassifSub(bn_model, len(labels), P.feature_size2d, untrained=P.untrained_blocks)
     if P.preload_net:
         net.load_state_dict(torch.load(P.preload_net, map_location=lambda storage, location: storage.cpu()))

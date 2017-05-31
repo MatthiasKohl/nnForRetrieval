@@ -5,12 +5,25 @@ from utils import read_mean_std
 from utils_image import *
 from utils_params import *
 
+# in AlexNet, there are 5 convolutional layers with parameters
+# and 3 FC layers in the classifier
+# in ResNet, before first layer, there are 2 modules with parameters.
+# then number of blocks per layers:
+# ResNet152 - layer 1: 3, layer 2: 8, layer 3: 36, layer 4: 3
+# ResNet50 - layer 1: 3, layer 2: 4, layer 3: 6, layer 4: 3
+# finally, a single FC layer is used as classifier
+untrained_blocks = {
+    'alexnet': 4,
+    'resnet152': 2 + 3 + 8 + 36
+}
+
 
 # parameters for the sub-regions classification training with AlexNet
 class Params(object):
 
     def __init__(self):
         # general parameters
+        self.cnn_model = 'ResNet152'
         self.dataset_full = 'data/pre_proc/fourviere_clean2_384'
         self.cuda_device = 0
         self.dataset_id = self.dataset_full.split('/')[-1]
@@ -18,11 +31,8 @@ class Params(object):
         self.match_labels = match_label_functions[self.dataset_id]
         self.image_input_size = image_sizes[self.dataset_id]
         self.num_classes = num_classes[self.dataset_id]
-        self.feature_size2d = feature_sizes[('alexnet', self.image_input_size)]
-
-        # in AlexNet, there are 5 convolutional layers with parameters
-        # and 3 FC layers in the classifier
-        self.untrained_blocks = 4
+        self.feature_size2d = feature_sizes[(self.cnn_model.lower(), self.image_input_size)]
+        self.untrained_blocks = untrained_blocks[self.cnn_model.lower()]
 
         # read mean and standard of dataset here to define transforms already
         m, s = read_mean_std(self.mean_std_file)
