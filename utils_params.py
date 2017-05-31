@@ -29,6 +29,7 @@ image_sizes = {
     'CLICIDE_video_384': (3, 224, 224),
     'fourviere_clean2_224sq': (3, 224, 224),
     'fourviere_clean2_384': (3, 224, 224),
+    'fourviere_clean2_448': (3, 224, 224),
     'oxford5k_video_224sq': (3, 224, 224),
     'oxford5k_video_384': (3, 224, 224)
 }
@@ -41,6 +42,7 @@ num_classes = {
     'CLICIDE_video_384': 464,
     'fourviere_clean2_224sq': 311,
     'fourviere_clean2_384': 311,
+    'fourviere_clean2_448': 311,
     'oxford5k_video_224sq': 17,
     'oxford5k_video_384': 17
 }
@@ -59,6 +61,7 @@ mean_std_files = {
     'CLICIDE_video_384': 'data/CLICIDE_384_train_ms.txt',
     'fourviere_clean2_224sq': 'data/fourviere_224sq_train_ms.txt',
     'fourviere_clean2_384': 'data/fourviere_384_train_ms.txt',
+    'fourviere_clean2_448': 'data/fourviere_448_train_ms.txt',
     'oxford5k_video_224sq': 'data/oxford5k_224sq_train_ms.txt',
     'oxford5k_video_384': 'data/oxford5k_384_train_ms.txt',
 }
@@ -71,6 +74,7 @@ match_label_functions = {
     'CLICIDE_video_384': match_label_video,
     'fourviere_clean2_224sq': match_label_fou_clean2,
     'fourviere_clean2_384': match_label_fou_clean2,
+    'fourviere_clean2_448': match_label_fou_clean2,
     'oxford5k_video_224sq': match_label_oxford,
     'oxford5k_video_384': match_label_oxford
 }
