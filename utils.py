@@ -4,7 +4,7 @@ import types
 import torch
 
 
-def readMeanStd(fname):
+def read_mean_std(fname):
     with open(fname) as f:
         mean = map(float, f.readline().split(' '))
         std = map(float, f.readline().split(' '))

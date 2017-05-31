@@ -10,12 +10,12 @@ from utils_params import log
 
 # Generic function to output the stats
 def output_stats(train_type, P, test_print, test_net, net, testset_tuple, epoch, batch_count, is_final, loss, running_loss, score):
-    disp_int = P.loss_int
+    disp_int = P.train_loss_int
     running_loss += loss
     if batch_count % disp_int == disp_int - 1:
         log(P, '[{0:d}, {1:5d}] loss: {2:.3f}'.format(epoch + 1, batch_count + 1, running_loss / disp_int))
         running_loss = 0.0
-    test_int = P.test_int
+    test_int = P.train_test_int
     if ((test_int > 0 and batch_count % test_int == test_int - 1) or
             (test_int <= 0 and is_final)):
         score = test_print(train_type, P, net, testset_tuple, test_net, score, epoch + 1)
@@ -96,7 +96,7 @@ def train_gen(train_type, P, test_print, test_net, net, train_set, testset_tuple
             'test_net': test_net,
             'net': net,
             'optimizer': optimizer,
-            'test_set': testset_tuple,
+            'testset_tuple': testset_tuple,
             'epoch': epoch,
             'micro_args': micro_args
         }

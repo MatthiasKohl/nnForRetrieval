@@ -4,7 +4,7 @@ import torch
 import random
 from os import path
 from model.nn_utils import set_net_train
-from utils_params import log, save_uuid
+from utils_params import log, save_uuid, unique_str
 from utils_dataset import get_pos_couples
 from utils_metrics import precision1, mean_avg_precision
 
@@ -67,7 +67,7 @@ def test_descriptor_net(P, get_embeddings, net, test_set, test_ref_set, kth=1):
 
 
 # Generic function to test and print stats when training a descriptor net
-def test_print_descriptor(train_type, P, get_embeddings, net, testset_tuple, best_score=0, epoch=0):
+def test_print_descriptor(train_type, P, net, testset_tuple, get_embeddings, best_score=0, epoch=0):
     def print_stats(prefix, p1, c, t, avg_pos, avg_neg, avg_max, mAP):
         s1 = 'Correct: {0} / {1} - acc: {2:.4f} - mAP:{3:.4f}\n'.format(c, t, p1, mAP)
         s2 = 'AVG cosine sim (sq dist) values: pos: {0:.4f} ({1:.4f}), neg: {2:.4f} ({3:.4f}), max: {4:.4f} ({5:.4f})'.format(avg_pos, 2 - 2 * avg_pos, avg_neg, 2 - 2 * avg_neg, avg_max, 2 - 2 * avg_max)
@@ -86,7 +86,7 @@ def test_print_descriptor(train_type, P, get_embeddings, net, testset_tuple, bes
         best_score = correct
         prefix = '{0}, EPOCH:{1}, SCORE:{2}'.format(train_type, epoch, correct)
         save_uuid(P, prefix)
-        torch.save(net.state_dict(), path.join(P.save_dir, P.unique_str() + "_best_siam.pth.tar"))
+        torch.save(net.state_dict(), path.join(P.save_dir, unique_str(P) + "_best_siam.pth.tar"))
     print_stats('TEST - ', prec1, correct, tot, sum_pos / num_pos, sum_neg / num_neg, sum_max / len(test_set), mAP)
     torch.save(net.state_dict(), path.join(P.save_dir, "model_siam_" + str(epoch) + ".pth.tar"))
 

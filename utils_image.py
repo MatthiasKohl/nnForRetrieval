@@ -1,6 +1,6 @@
 # -*- encoding: utf-8 -*-
 
-import torch.transforms as transforms
+import torchvision.transforms as transforms
 from PIL import Image
 import cv2
 from scipy.ndimage import interpolation

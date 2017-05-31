@@ -3,8 +3,9 @@
 from __future__ import print_function
 import sys
 import tempfile
+import inspect
 from os import rename, path
-from utils import *
+from utils import trans_str, fun_str
 
 
 def match_label_fou_clean2(x):
@@ -62,7 +63,7 @@ mean_std_files = {
     'oxford5k_video_384': 'data/oxford5k_384_train_ms.txt',
 }
 
-match_label = {
+match_label_functions = {
     'CLICIDE': match_label_video,
     'CLICIDE_video_227sq': match_label_video,
     'CLICIDE_max_224sq': match_label_video,
@@ -75,40 +76,41 @@ match_label = {
 }
 
 
-def unique_str(params):
-    return params.uuid.strftime('%Y%m%d-%H%M%S-%f')
+def unique_str(P):
+    return P.uuid.strftime('%Y%m%d-%H%M%S-%f')
 
 
-def save(params, f, prefix):
-    f.write('{0}\n'.format(prefix))
-    for name, value in sorted(vars(params).items()):
-        if name == 'uuid':
-            continue
-        if name in ('test_trans', 'train_trans', 'train_sub_scales'):
-            if type(value) is list or type(value) is tuple:
-                value = ', '.join(trans_str(t) for t in value)
-            else:
-                value = trans_str(value)
-        elif name in ('match_labels_f'):
-            value = fun_str(value)
-        f.write('{0}:{1}\n'.format(name, value))
+def save(P, f, prefix):
+    f.write('{0}\n\n'.format(prefix))
+    # for name, value in sorted(vars(P).items()):
+    #     if name == 'uuid':
+    #         continue
+    #     if name in ('test_trans', 'train_trans', 'train_sub_scales'):
+    #         if type(value) is list or type(value) is tuple:
+    #             value = ', '.join(trans_str(t) for t in value)
+    #         else:
+    #             value = trans_str(value)
+    #     elif name in ('match_labels_f'):
+    #         value = fun_str(value)
+    #     f.write('{0}:{1}\n'.format(name, value))
+    f.write(inspect.getsource(P.__class__))
     f.close()
 
 
-def save_uuid(params, prefix):
-    f = tempfile.NamedTemporaryFile(dir=params.save_dir, delete=False)
-    save(params, f, prefix)
+def save_uuid(P, prefix):
+    f = tempfile.NamedTemporaryFile(dir=P.save_dir, delete=False)
+    save(P, f, prefix)
     # the following will not work on Windows (would need to add a remove first)
-    rename(f.name, path.join(params.save_dir, params.unique_str() + '.params'))
+    rename(f.name, path.join(P.save_dir, unique_str(P) + '.params'))
 
 
-def log_detail(params, p_file, *args):
+def log_detail(P, p_file, *args):
     if p_file:
         print(*args, file=p_file)
-    if params.log_file:
-        with open(params.log_file, 'a') as f:
+    if P.log_file:
+        with open(P.log_file, 'a') as f:
             print(*args, file=f)
 
 
-def log(params, *args):
-    params.log_detail(sys.stdout, *args)
+def log(P, *args):
+    log_detail(P, sys.stdout, *args)

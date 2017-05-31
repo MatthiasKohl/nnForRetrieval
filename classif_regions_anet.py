@@ -1,16 +1,23 @@
 # -*- encoding: utf-8 -*-
 
 import traceback
+import random
+import torch
 import torch.optim as optim
+import torch.nn as nn
 import torchvision.models as models
-from model.siamese import *
-from model.nn_utils import *
-from utils_dataset import get_images_labels
+import torchvision.transforms as transforms
+from torch.autograd import Variable
 from classif_regions_anet_p import P
+from utils import move_device, tensor_t, tensor
+from utils_train import fold_batches, train_gen
 from utils_image import imread_rgb
-from utils_params import log
+from utils_params import log, log_detail
 from utils_classif import test_print_classif
 from utils_siamese import test_print_descriptor
+from utils_dataset import get_images_labels
+from model.siamese import TuneClassif, TuneClassifSub
+from model.custom_modules import NormalizeL2Fun
 
 # keep labels as global variable. they are initialized after
 # train set has been loaded and then kept constant
@@ -32,7 +39,7 @@ def test_classif_net(net, test_set):
         correct, total = last
         im_trans = trans(batch[0][0])
         test_in = move_device(im_trans.unsqueeze(0), P.cuda_device)
-        out = net(Variable(test_in, volatile=True)).data
+        out = net(Variable(test_in, volatile=True))[0].data
         # first get all maximal values for classification
         # then, use the spatial region with the highest maximal value
         # to make a prediction
@@ -48,7 +55,7 @@ def test_classif_net(net, test_set):
     return fold_batches(eval_batch_test, (0, 0), test_set, 1)
 
 
-def train_classif_subparts(net, train_set, testset_tuple, labels, criterion, optimizer, best_score=0):
+def train_classif_subparts(net, train_set, testset_tuple, criterion, optimizer, best_score=0):
     # trans is a list of transforms for each scale here
     trans_scales = P.train_trans
     for i, t in enumerate(trans_scales):
@@ -66,21 +73,20 @@ def train_classif_subparts(net, train_set, testset_tuple, labels, criterion, opt
         # each image/batch is composed of multiple scales
         n_sc = len(batch[0][0])
         train_in_scales = []
-        labels_in = tensor_t(torch.LongTensor, P.cuda_device, n_sc)
-        label = labels.index(batch[0][1])
         for j in range(n_sc):
             im = trans_scales[j](batch[0][0][j])
             train_in = tensor(P.cuda_device, 1, *im.size())
-            train_in = move_device(im, P.cuda_device)
             train_in_scales.append(train_in)
-            labels_in[j] = label
+        labels_in = tensor_t(torch.LongTensor, P.cuda_device, 1)
+        labels_in[0] = labels.index(batch[0][1])
         return train_in_scales, [labels_in]
 
-    def create_loss(scales_out, labels_in):
+    def create_loss(scales_out, labels_list):
         # scales_out is a list over all scales,
         # with all sub-region classifications for each scale
+        labels_in = labels_list[0]
         max_size = max(t_out.size(2) * t_out.size(3) for t_out in scales_out)
-        loss = criterion(scales_out[0][:, :, 0, 0], labels_in[0])
+        loss = criterion(scales_out[0][:, :, 0, 0], labels_in)
         for s, t_out in enumerate(scales_out):
             # the scaling factor for this scale. it is simply the ratio
             # of the maximal spatial size over the spatial size of this
@@ -90,8 +96,8 @@ def train_classif_subparts(net, train_set, testset_tuple, labels, criterion, opt
                 for j in range(t_out.size(3)):
                     if s == 0 and i == 0 and j == 0:
                         continue
-                    loss += sc * criterion(t_out[:, :, i, j], labels_in[0])
-        if P.loss_avg:
+                    loss += sc * criterion(t_out[:, :, i, j], labels_in)
+        if P.train_loss_avg:
             loss /= float(max_size * len(scales_out))
         return loss, None
 
@@ -102,14 +108,14 @@ def train_classif_subparts(net, train_set, testset_tuple, labels, criterion, opt
 # values where the highest maximal activation occurred
 def get_embeddings(net, dataset, device, out_size):
     test_trans = P.test_pre_proc
-    if P.siam_test_pre_proc:
+    if P.test_pre_proc:
         test_trans = transforms.Compose([])
 
     def batch(last, i, is_final, batch):
         embeddings = last
         im_trans = test_trans(batch[0][0])
         test_in = move_device(im_trans.unsqueeze(0), P.cuda_device)
-        out = net(Variable(test_in, volatile=True)).data
+        out = net(Variable(test_in, volatile=True))[0].data
         # first, determine location of highest maximal activation
         max_pred, _ = out.max(1)
         max_pred1, max_i1 = max_pred.max(2)
@@ -130,9 +136,9 @@ def get_embeddings(net, dataset, device, out_size):
 
 def get_class_net():
     if P.bn_model:
-            bn_model = TuneClassif(models.alexnet(), len(labels), P.feature_size2d)
-            bn_model.load_state_dict(torch.load(P.bn_model, map_location=lambda storage, location: storage.cpu()))
-            # copy_bn_all(net.features, bn_model.features)
+        bn_model = TuneClassif(models.alexnet(), len(labels), P.feature_size2d)
+        bn_model.load_state_dict(torch.load(P.bn_model, map_location=lambda storage, location: storage.cpu()))
+        # copy_bn_all(net.features, bn_model.features)
     else:
         bn_model = models.alexnet(pretrained=True)
     net = TuneClassifSub(bn_model, len(labels), P.feature_size2d, untrained=P.untrained_blocks)
@@ -144,8 +150,8 @@ def get_class_net():
 
 def main():
     # training and test sets
-    train_set_full = get_images_labels(P.dataset_full, P.match_labels_f)
-    test_set_full = get_images_labels(P.dataset_full + '/test', P.match_labels_f)
+    train_set_full = get_images_labels(P.dataset_full, P.match_labels)
+    test_set_full = get_images_labels(P.dataset_full + '/test', P.match_labels)
 
     labels_list = [t[1] for t in train_set_full]
     # we have to give a number to each label,
@@ -184,7 +190,7 @@ def main():
     testset_tuple = (test_set, test_train_set)
     if P.test_upfront:
         log(P, 'Upfront testing of classification model')
-        score = test_print_classif(class_net, testset_tuple)
+        score = test_print_classif(train_type, P, class_net, testset_tuple, test_classif_net)
     else:
         score = 0
     if P.train:
@@ -193,7 +199,7 @@ def main():
         log(P, 'Finished classification training')
     if P.test_descriptor_net:
         log(P, 'Testing as descriptor')
-        test_print_descriptor(train_type, P, get_embeddings, class_net, testset_tuple)
+        test_print_descriptor(train_type, P, class_net, testset_tuple, get_embeddings)
 
 
 if __name__ == '__main__':
@@ -201,5 +207,5 @@ if __name__ == '__main__':
         try:
             main()
         except:
-            P.log_detail(None, traceback.format_exc())
+            log_detail(P, None, traceback.format_exc())
             raise

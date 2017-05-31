@@ -83,7 +83,7 @@ class TuneClassifSub(TuneClassif):
         return x
 
     def forward(self, *scales):
-        return [forward_single(x) for x in scales]
+        return [self.forward_single(x) for x in scales]
 
 
 class FeatureNet(nn.Module):

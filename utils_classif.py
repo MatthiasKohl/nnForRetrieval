@@ -2,7 +2,7 @@
 
 import torch
 from model.nn_utils import set_net_train
-from utils_params import log, save_uuid
+from utils_params import log, save_uuid, unique_str
 from os import path
 
 
@@ -15,7 +15,7 @@ def test_print_classif(train_type, P, net, testset_tuple, test_net, best_score=0
         best_score = c
         prefix = '{0}, EPOCH:{1}, SCORE:{2}'.format(train_type, epoch, c)
         save_uuid(P, prefix)
-        torch.save(net.state_dict(), path.join(P.save_dir, P.unique_str() + "_best_classif.pth.tar"))
+        torch.save(net.state_dict(), path.join(P.save_dir, unique_str(P) + "_best_classif.pth.tar"))
     log(P, 'TEST - correct: {0} / {1} - acc: {2}'.format(c, t, float(c) / t))
 
     c, t = test_net(net, test_train_set)
