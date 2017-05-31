@@ -24,7 +24,7 @@ class Params(object):
     def __init__(self):
         # general parameters
         self.cnn_model = 'ResNet152'
-        self.dataset_full = 'data/pre_proc/fourviere_clean2_384'
+        self.dataset_full = 'data/pre_proc/fourviere_clean2_448'
         self.cuda_device = 0
         self.dataset_id = self.dataset_full.split('/')[-1]
         self.mean_std_file = mean_std_files[self.dataset_id]
@@ -39,14 +39,14 @@ class Params(object):
 
         # Classification net general and test params
         self.preload_net = ''  # allows to continue training a network
-        self.bn_model = 'data/finetune_classif/fou_best_alexnet_classif_finetuned.pth.tar'
+        self.bn_model = 'data/finetune_classif/fou_best_resnet152_classif_finetuned.pth.tar'
         self.test_upfront = True
         self.train = True
         self.test_pre_proc = True
         self.test_trans = transforms.Compose([transforms.ToTensor(), transforms.Normalize(m, s)])
 
         # Classification net training params
-        self.train_epochs = 5
+        self.train_epochs = 50
         self.train_batch_size = 32
         self.train_micro_batch = 1
         self.train_aug_rot = r = 180
@@ -59,12 +59,12 @@ class Params(object):
         # list of transforms for all scales
         # the train_trans parameter should be a list of same
         # length representing the train transformation for each scale
-        self.train_sub_scales = [transforms.Compose([]), transforms.Compose([affine_scale_noisy_cv(2.)])]
+        self.train_sub_scales = [transforms.Compose([]), transforms.Compose([scale_cv(224)])]
         # transformation for each scale
         self.train_trans = [trans, trans]
         self.train_pre_proc = [False, False]
 
-        self.train_lr = 5e-4
+        self.train_lr = 1e-3
         self.train_momentum = 0.9
         self.train_weight_decay = 5e-4
         self.train_optim = 'SGD'

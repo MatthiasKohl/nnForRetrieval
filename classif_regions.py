@@ -8,7 +8,7 @@ import torch.nn as nn
 import torchvision.models as models
 import torchvision.transforms as transforms
 from torch.autograd import Variable
-from classif_regions_anet_p import P
+from classif_regions_p import P
 from utils import move_device, tensor_t, tensor
 from utils_train import fold_batches, train_gen
 from utils_image import imread_rgb
@@ -73,32 +73,32 @@ def train_classif_subparts(net, train_set, testset_tuple, criterion, optimizer, 
         # each image/batch is composed of multiple scales
         n_sc = len(batch[0][0])
         train_in_scales = []
+        labels_in = tensor_t(torch.LongTensor, P.cuda_device, 1)
+        labels_in.fill_(labels.index(batch[0][1]))
         for j in range(n_sc):
             im = trans_scales[j](batch[0][0][j])
-            train_in = tensor(P.cuda_device, 1, *im.size())
+            train_in = move_device(im.unsqueeze(0), P.cuda_device)
             train_in_scales.append(train_in)
-        labels_in = tensor_t(torch.LongTensor, P.cuda_device, 1)
-        labels_in[0] = labels.index(batch[0][1])
         return train_in_scales, [labels_in]
 
     def create_loss(scales_out, labels_list):
         # scales_out is a list over all scales,
         # with all sub-region classifications for each scale
         labels_in = labels_list[0]
-        max_size = max(t_out.size(2) * t_out.size(3) for t_out in scales_out)
-        loss = criterion(scales_out[0][:, :, 0, 0], labels_in)
+        loss = None
         for s, t_out in enumerate(scales_out):
-            # the scaling factor for this scale. it is simply the ratio
-            # of the maximal spatial size over the spatial size of this
-            # scale
-            sc = max_size / float(t_out.size(2) * t_out.size(3))
-            for i in range(t_out.size(2)):
-                for j in range(t_out.size(3)):
-                    if s == 0 and i == 0 and j == 0:
-                        continue
-                    loss += sc * criterion(t_out[:, :, i, j], labels_in)
+            # batch size is 1, only consider this output
+            t_out0 = t_out[0]
+            # all spatial outputs are of shape (num_classes, width, height)
+            # make a 'batch' as follows: (width * height, num_classes)
+            # then apply loss to the whole batch, and accumulate over scales
+            t_out_all = t_out0.view(t_out0.size(0), -1).t()
+            if loss is None:
+                loss = criterion(t_out_all, labels_in.expand(t_out_all.size(0)))
+            else:
+                loss += criterion(t_out_all, labels_in.expand(t_out_all.size(0)))
         if P.train_loss_avg:
-            loss /= float(max_size * len(scales_out))
+            loss /= len(scales_out)
         return loss, None
 
     train_gen(train_type, P, test_print_classif, test_classif_net, net, train_set, testset_tuple, optimizer, create_epoch, create_batch, create_loss, best_score=best_score)
