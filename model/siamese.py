@@ -25,9 +25,12 @@ class TuneClassif(nn.Module):
         set_untrained_blocks([self.features, self.classifier], untrained)
 
         # replace last module of classifier with a reduced one
-        for name, module in self.classifier._modules.items():
-            if module is self.classifier[len(self.classifier._modules) - 1]:
-                self.classifier._modules[name] = nn.Linear(module.in_features, num_classes)
+        last_module = self.classifier[len(self.classifier._modules) - 1]
+        if not isinstance(last_module, nn.Linear) or last_module.out_features != num_classes:
+            for name, module in self.classifier._modules.items():
+                if module is last_module:
+                    self.classifier._modules[name] = nn.Linear(module.in_features, num_classes)
+
         self.feature_size = num_classes
         # if no reduc is wanted, remove it
         if not reduc:
