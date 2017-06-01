@@ -4,9 +4,25 @@ import torch
 import random
 from os import path
 from model.nn_utils import set_net_train
+from utils import tensor_t
 from utils_params import log, save_uuid, unique_str
 from utils_dataset import get_pos_couples
 from utils_metrics import precision1, mean_avg_precision
+
+
+# get byte tensors indicating the indexes of images having a different label
+def get_lab_indicators(dataset, device):
+    n = len(dataset)
+    indicators = {}
+    for _, lab1, _ in dataset:
+        if lab1 in indicators:
+            continue
+        indicator = tensor_t(torch.ByteTensor, device, n).fill_(0)
+        for i2, (_, lab2, _) in enumerate(dataset):
+            if lab1 == lab2:
+                indicator[i2] = 1
+        indicators[lab1] = indicator
+    return indicators
 
 
 # determine the device where embeddings should be stored
@@ -32,7 +48,7 @@ def embeddings_device_dim(P, net, n, sim_matrix=False):
 def get_similarities(P, get_embeddings, net, dataset):
     set_net_train(net, False)
     n = len(dataset)
-    d, o = embeddings_device_dim(net, n, sim_matrix=True)
+    d, o = embeddings_device_dim(P, net, n, sim_matrix=True)
     embeddings = get_embeddings(net, dataset, d, o)
     similarities = torch.mm(embeddings, embeddings.t())
     set_net_train(net, True, bn_train=P.train_bn)
