@@ -1,7 +1,7 @@
 # -*- encoding: utf-8 -*-
 
 from datetime import datetime
-from utils import read_mean_std
+from utils import read_mean_std, parse_dataset_id
 from utils_image import *
 from utils_params import *
 
@@ -26,7 +26,7 @@ class Params(object):
         self.cnn_model = 'ResNet152'
         self.dataset_full = 'data/pre_proc/fourviere_clean2_448'
         self.cuda_device = 0
-        self.dataset_id = self.dataset_full.split('/')[-1]
+        self.dataset_id = parse_dataset_id(self.dataset_full)
         self.mean_std_file = mean_std_files[self.dataset_id]
         self.match_labels = match_label_functions[self.dataset_id]
         self.image_input_size = image_sizes[self.dataset_id]
@@ -39,7 +39,7 @@ class Params(object):
 
         # Classification net general and test params
         self.preload_net = ''  # allows to continue training a network
-        self.bn_model = 'data/finetune_classif/fou_best_resnet152_classif_finetuned.pth.tar'
+        self.bn_model = 'data/20170601-133538-276450_best_classif.pth.tar'
         self.test_upfront = True
         self.train = True
         self.test_pre_proc = True
@@ -48,7 +48,7 @@ class Params(object):
         # Classification net training params
         self.train_epochs = 50
         self.train_batch_size = 32
-        self.train_micro_batch = 1
+        self.train_micro_batch = 1  # has to be 1
         self.train_aug_rot = r = 180
         self.train_aug_hrange = hr = 0
         self.train_aug_vrange = vr = 0
@@ -76,7 +76,7 @@ class Params(object):
         # is too small, as global variances/means cannot be properly
         # approximated in this case. so train only when having a batch
         # of at least 16
-        self.train_bn = self.train_micro_batch >= 16 or (self.train_micro_batch <= 0 and (self.train_batch_size >= 16 or self.train_batch_size <= 0))
+        self.train_bn = False
 
         # Descriptor net parameters
         # if True, test the network as a descriptor

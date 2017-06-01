@@ -101,13 +101,15 @@ def train_classif_subparts(net, train_set, testset_tuple, criterion, optimizer, 
             loss /= len(scales_out)
         return loss, None
 
-    train_gen(train_type, P, test_print_classif, test_classif_net, net, train_set, testset_tuple, optimizer, create_epoch, create_batch, create_loss, best_score=best_score)
+    train_gen(train_type, P, test_print_classif, test_classif_net, net,
+              train_set, testset_tuple, optimizer, create_epoch, create_batch,
+              create_loss, best_score=best_score)
 
 
 # get the embeddings as the normalized output of the classification
 # values where the highest maximal activation occurred
 def get_embeddings(net, dataset, device, out_size):
-    test_trans = P.test_pre_proc
+    test_trans = P.test_trans
     if P.test_pre_proc:
         test_trans = transforms.Compose([])
 
@@ -139,7 +141,7 @@ def get_class_net():
     if P.cnn_model.lower() == 'resnet152':
         model = models.resnet152
     if P.bn_model:
-        bn_model = TuneClassif(model(), len(labels), P.feature_size2d)
+        bn_model = TuneClassif(model(), len(labels))
         bn_model.load_state_dict(torch.load(P.bn_model, map_location=lambda storage, location: storage.cpu()))
         # copy_bn_all(net.features, bn_model.features)
     else:
@@ -159,23 +161,21 @@ def main():
     labels_list = [t[1] for t in train_set_full]
     # we have to give a number to each label,
     # so we need a list here for the index
-    labels.extend(set(labels_list))
+    labels.extend(sorted(list(set(labels_list))))
 
     log(P, 'Loading and transforming train/test sets.')
 
     # open the images (and transform already if possible)
     # do that only if it fits in memory !
     train_set, test_train_set, test_set = [], [], []
-    train_pre_f = [t if pre_proc else None for t, pre_proc in zip(P.train_trans, P.train_pre_proc)]
-    test_pre_f = P.test_trans if P.test_pre_proc else None
+    train_pre_f = [t if pre_proc else transforms.Compose([]) for t, pre_proc in zip(P.train_trans, P.train_pre_proc)]
+    test_pre_f = P.test_trans if P.test_pre_proc else transforms.Compose([])
     train_scales = P.train_sub_scales
     for im, lab in train_set_full:
         im_o = imread_rgb(im)
         scales = [t(im_o) for t in train_scales]
         train_set.append((scales, lab, im))
         for j, t in enumerate(train_pre_f):
-            if t is None:
-                continue
             scales[j] = t(scales[j])
         im_pre_test = test_pre_f(im_o) if test_pre_f else im_o
         test_train_set.append((im_pre_test, lab, im))
@@ -184,8 +184,7 @@ def main():
         if lab not in labels:
             continue
         im_o = imread_rgb(im)
-        im_pre = test_pre_f(im_o) if test_pre_f else im_o
-        test_set.append((im_pre, lab, im))
+        test_set.append((test_pre_f(im_o), lab, im))
 
     class_net = get_class_net()
     optimizer = optim.SGD((p for p in class_net.parameters() if p.requires_grad), lr=P.train_lr, momentum=P.train_momentum, weight_decay=P.train_weight_decay)
