@@ -15,14 +15,14 @@ from utils_train import fold_batches, train_gen
 from utils_image import imread_rgb
 from utils_params import log, log_detail
 from utils_siamese import *
-from utils_dataset import get_images_labels, get_pos_couples
+from utils_dataset import get_images_labels, get_pos_couples, choose_rand_neg
 from model.siamese import TuneClassifSub, RegionDescriptorNet
 from model.custom_modules import TripletLoss
 
 # keep labels as global variable. they are initialized after
 # train set has been loaded and then kept constant
 labels = []
-train_type = P.cnn_model.lower() + ' Classification sub-regions'
+train_type = P.cnn_model.lower() + ' Siamese sub-regions'
 
 
 def get_embeddings(net, dataset, device, out_size):
@@ -133,7 +133,7 @@ def train_siam_triplets_pos_couples(net, train_set, testset_tuple, criterion, cr
         train_in1 = move_device(train_trans(im1).unsqueeze(0), P.cuda_device)
         train_in2 = move_device(train_trans(im2).unsqueeze(0), P.cuda_device)
         train_in3 = move_device(train_trans(im3).unsqueeze(0), P.cuda_device)
-        # return input tensors, no labels
+        # return input tensors and labels
         return [train_in1, train_in2, train_in3], [labels_in]
 
     def create_loss(out, labels_list):

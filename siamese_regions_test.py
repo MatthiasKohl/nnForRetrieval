@@ -12,7 +12,7 @@ from utils_params import *
 from utils import *
 from classif_regions import P, labels, test_classif_net, get_embeddings, get_class_net
 
-
+# TODO !!!
 def usage():
     print('Usage: ' + sys.argv[0] + ' [options]')
     prefix = 'Options:\n\tRequired:\n'
