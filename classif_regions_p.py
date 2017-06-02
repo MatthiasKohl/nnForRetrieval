@@ -52,8 +52,8 @@ class Params(object):
         self.train_aug_rot = r = 180
         self.train_aug_hrange = hr = 0
         self.train_aug_vrange = vr = 0
-        self.train_aug_hsrange = hsr = 0.5
-        self.train_aug_vsrange = vsr = 0.5
+        self.train_aug_hsrange = hsr = 0.25
+        self.train_aug_vsrange = vsr = 0.25
         self.train_aug_hflip = hflip = True
         trans = transforms.Compose([random_affine_noisy_cv(rotation=r, h_range=hr, v_range=vr, hs_range=hsr, vs_range=vsr, h_flip=hflip), transforms.ToTensor(), transforms.Normalize(m, s)])
         # list of transforms for all scales

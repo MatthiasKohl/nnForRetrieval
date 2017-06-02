@@ -13,7 +13,7 @@ def output_stats(train_type, P, test_print, test_net, net, testset_tuple, epoch,
     disp_int = P.train_loss_int
     running_loss += loss
     if batch_count % disp_int == disp_int - 1:
-        log(P, '[{0:d}, {1:5d}] loss: {2:.3f}'.format(epoch + 1, batch_count + 1, running_loss / disp_int))
+        log(P, '[{0:d}, {1:5d}] loss: {2:.5f}'.format(epoch + 1, batch_count + 1, running_loss / disp_int))
         running_loss = 0.0
     test_int = P.train_test_int
     if ((test_int > 0 and batch_count % test_int == test_int - 1) or

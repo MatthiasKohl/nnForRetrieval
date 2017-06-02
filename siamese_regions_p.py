@@ -39,7 +39,7 @@ class Params(object):
 
         # Classification net general and test params
         self.preload_net = ''  # allows to continue training a network
-        self.classif_model = 'data/finetune_classif/fou_best_resnet152_classif_finetuned.pth.tar'
+        self.classif_model = 'data/classif_subparts/20170601-163553-383107_best_classif.pth.tar'
         self.test_upfront = True
         self.train = True
         self.test_pre_proc = True
@@ -52,19 +52,16 @@ class Params(object):
         self.train_aug_rot = r = 180
         self.train_aug_hrange = hr = 0
         self.train_aug_vrange = vr = 0
-        self.train_aug_hsrange = hsr = 0.5
-        self.train_aug_vsrange = vsr = 0.5
+        self.train_aug_hsrange = hsr = 0.25
+        self.train_aug_vsrange = vsr = 0.25
         self.train_aug_hflip = hflip = True
         trans = transforms.Compose([random_affine_noisy_cv(rotation=r, h_range=hr, v_range=vr, hs_range=hsr, vs_range=vsr, h_flip=hflip), transforms.ToTensor(), transforms.Normalize(m, s)])
-        # list of transforms for all scales
-        # the train_trans parameter should be a list of same
-        # length representing the train transformation for each scale
-        self.train_sub_scales = [transforms.Compose([]), transforms.Compose([scale_cv(224)])]
-        # transformation for each scale
-        self.train_trans = [trans, trans]
-        self.train_pre_proc = [False, False]
 
-        self.train_lr = 1e-3
+        # transformation for each scale
+        self.train_trans = trans
+        self.train_pre_proc = False
+
+        self.train_lr = 1e-1
         self.train_momentum = 0.9
         self.train_weight_decay = 5e-4
         self.train_optim = 'SGD'
@@ -86,12 +83,12 @@ class Params(object):
         self.embeddings_cuda_size = 2 ** 30
         self.feature_dim = 2048
         self.regions_k = 6
-        self.train_loss2_alpha = 0.02
+        self.train_loss2_alpha = 0.0
         self.train_loss2_avg = True
         self.triplet_margin = 0.1
         # number of epochs after which semi-hard triplet choice switches
         # to hard triplet choice
-        self.epoch_switch = 2
+        self.train_epoch_switch = 2
 
         # UUID for these parameters (current time)
         self.uuid = datetime.now()

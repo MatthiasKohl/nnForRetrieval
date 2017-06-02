@@ -2,6 +2,7 @@
 
 import traceback
 import random
+import numpy as np
 import torch
 import torch.optim as optim
 import torch.nn as nn
@@ -24,29 +25,47 @@ labels = []
 train_type = P.cnn_model.lower() + ' Classification sub-regions'
 
 
+def get_embeddings(net, dataset, device, out_size):
+    test_trans = P.test_trans
+    if P.test_pre_proc:
+        test_trans = transforms.Compose([])
+
+    def batch(last, i, is_final, batch):
+        embeddings = last
+        # one image at a time
+        test_in = move_device(test_trans(batch[0][0]).unsqueeze(0), P.cuda_device)
+
+        out = net(Variable(test_in, volatile=True)).data
+        embeddings[i] = out[0]
+        return embeddings
+
+    init = tensor(device, len(dataset), out_size)
+    return fold_batches(batch, init, dataset, 1)
+
+
 # train using triplets, constructing triplets from all positive couples
 def train_siam_triplets_pos_couples(net, train_set, testset_tuple, criterion, criterion2, optimizer, best_score=0):
     """
         TODO
     """
-    train_trans = P.siam_train_trans
-    if P.siam_train_pre_proc:
+    train_trans = P.train_trans
+    if P.train_pre_proc:
         train_trans = transforms.Compose([])
 
     couples = get_pos_couples(train_set)
-    sim_device, _ = get_device_and_size(net, len(train_set), sim_matrix=True)
+    sim_device, _ = embeddings_device_dim(P, net, len(train_set), sim_matrix=True)
     lab_indicators = get_lab_indicators(train_set, sim_device)
-    num_pos = sum(len(couples[l]) for l in couples)
+    num_pos = sum(len(couples[lab]) for lab in couples)
     log(P, '#pos (without order, with duplicates):{0}'.format(num_pos))
 
     # fold over positive couples here and choose negative for each pos
     # need to make sure the couples are evenly distributed
     # such that all batches can have couples from every instance
     def shuffle_couples(couples):
-        for l in couples:
-            random.shuffle(couples[l])
+        for lab in couples:
+            random.shuffle(couples[lab])
         # get x such that only 20% of labels have more than x couples
-        a = np.array([len(couples[l]) for l in couples])
+        a = np.array([len(couples[lab]) for lab in couples])
         x = int(np.percentile(a, 80))
         out = []
         keys = couples.keys()
@@ -54,21 +73,21 @@ def train_siam_triplets_pos_couples(net, train_set, testset_tuple, criterion, cr
         # append the elements to out in a strided way
         # (up to x elements per label)
         for count in range(x):
-            for l in keys:
-                if count >= len(couples[l]):
+            for lab in keys:
+                if count >= len(couples[lab]):
                     continue
-                out.append(couples[l][count])
+                out.append(couples[lab][count])
         # the last elements in the longer lists are inserted at random
-        for l in keys:
-            for i in range(x, len(couples[l])):
-                out.insert(random.randrange(len(out)), couples[l][i])
+        for lab in keys:
+            for i in range(x, len(couples[lab])):
+                out.insert(random.randrange(len(out)), couples[lab][i])
         return out
 
     def create_epoch(epoch, couples, testset_tuple):
         test_ref_set = testset_tuple[1]
         # use the test-train set to obtain embeddings and similarities
         # (since it may be transformed differently than train set)
-        similarities, _ = get_similarities(net, test_ref_set)
+        similarities, _ = get_similarities(P, get_embeddings, net, test_ref_set)
 
         # shuffle the couples
         shuffled = shuffle_couples(couples)
@@ -88,7 +107,7 @@ def train_siam_triplets_pos_couples(net, train_set, testset_tuple, criterion, cr
         # collapsing the model at beginning of training
         ind_exl = lab_indicators[lab]
         sim_pos = similarities[i1, i2]
-        if epoch < P.siam_sh_epoch_switch:
+        if epoch < P.train_epoch_switch:
             # exclude all positives as well as any that are
             # more similar than sim_pos
             ind_exl = ind_exl | similarities[i1].ge(sim_pos)
@@ -133,26 +152,8 @@ def train_siam_triplets_pos_couples(net, train_set, testset_tuple, criterion, cr
         return loss, loss2
 
     train_gen(train_type, P, test_print_descriptor, get_embeddings, net,
-              train_set, testset_tuple, optimizer, create_epoch, create_batch,
+              couples, testset_tuple, optimizer, create_epoch, create_batch,
               create_loss, best_score=best_score)
-
-
-def get_embeddings(net, dataset, device, out_size):
-    test_trans = P.test_trans
-    if P.test_pre_proc:
-        test_trans = transforms.Compose([])
-
-    def batch(last, i, is_final, batch):
-        embeddings = last
-        # one image at a time
-        test_in = move_device(test_trans(batch[0][0]).unsqueeze(0), P.cuda_device)
-
-        out = net(Variable(test_in, volatile=True)).data
-        embeddings[i] = out[0]
-        return embeddings
-
-    init = tensor(device, len(dataset), out_size)
-    return fold_batches(batch, init, dataset, 1)
 
 
 def get_siamese_net():
