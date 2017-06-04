@@ -212,7 +212,7 @@ def main():
         log(P, 'Finished region-descriptor training')
     if P.test_descriptor_net:
         log(P, 'Testing as descriptor')
-        test_print_descriptor(train_type, P, class_net, testset_tuple, get_embeddings)
+        test_print_descriptor(train_type, P, siam_net, testset_tuple, get_embeddings)
 
 
 if __name__ == '__main__':
