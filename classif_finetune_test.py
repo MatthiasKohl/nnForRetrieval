@@ -51,6 +51,8 @@ def main(dataset_full, model, weights, device, classify, batch_size):
     P.cnn_model = model
     P.feature_size2d = feature_sizes[model, image_sizes[dataset_id]]
     P.embeddings_classify = classify
+    out_size = len(labels) if classify else flat_feature_sizes[model, P.image_input_size]
+    P.feature_dim = out_size
 
     print('Loading and transforming train/test sets.')
 
@@ -74,8 +76,8 @@ def main(dataset_full, model, weights, device, classify, batch_size):
     set_net_train(class_net, False)
     c, t = test_classif_net(class_net, test_set)
     print('Classification (TEST): {0} / {1} - acc: {2:.4f}'.format(c, t, float(c) / t))
-    test_embeddings = get_embeddings(class_net, test_set, device, len(labels))
-    ref_embeddings = get_embeddings(class_net, test_train_set, device, len(labels))
+    test_embeddings = get_embeddings(class_net, test_set, device, out_size)
+    ref_embeddings = get_embeddings(class_net, test_train_set, device, out_size)
     sim = torch.mm(test_embeddings, ref_embeddings.t())
     prec1, c, t, _, _ = precision1(sim, test_set, test_train_set)
     mAP = mean_avg_precision(sim, test_set, test_train_set)

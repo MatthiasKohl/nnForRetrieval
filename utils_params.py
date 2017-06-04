@@ -53,6 +53,11 @@ feature_sizes = {
     ('resnet152', (3, 227, 227)): (8, 8)
 }
 
+flat_feature_sizes = {
+    ('alexnet', (3, 224, 224)): 9216,
+    ('resnet152', (3, 224, 224)): 100352
+}
+
 mean_std_files = {
     'CLICIDE': 'data/CLICIDE_224sq_train_ms.txt',
     'CLICIDE_video_227sq': 'data/cli.txt',

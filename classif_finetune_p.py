@@ -80,11 +80,10 @@ class Params(object):
         self.test_descriptor_net = True
         # the threshold (in Bytes) for embeddings to be computed on GPU
         self.embeddings_cuda_size = 2 ** 30
-        self.feature_dim = self.num_classes
         # if True, use classifier output for embeddings.
         # else use convolutional features
         self.embeddings_classify = False
-
+        self.feature_dim = self.num_classes if self.embeddings_classify else flat_feature_sizes[(self.cnn_model.lower(), self.image_input_size)]
         # UUID for these parameters (current time)
         self.uuid = datetime.now()
         self.save_dir = 'data'
