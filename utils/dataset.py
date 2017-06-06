@@ -5,7 +5,7 @@ import glob
 import random
 import torch
 from os import path
-from . import tensor_t
+from general import tensor_t
 
 
 def get_images_labels(folder='.', label_f=lambda x: x.split('.')[0]):

@@ -10,12 +10,12 @@ import torchvision.models as models
 import torchvision.transforms as transforms
 from torch.autograd import Variable
 from siamese_regions_p import P
-from ..utils import move_device, tensor_t, tensor, fold_batches, train_gen
-from ..utils import imread_rgb, log, log_detail, get_lab_indicators
-from ..utils import get_images_labels, get_similarities, embeddings_device_dim
-from ..utils import test_print_descriptor, choose_rand_neg, get_pos_couples
-from ..model.siamese import TuneClassifSub, RegionDescriptorNet
-from ..model.custom_modules import TripletLoss
+from utils import move_device, tensor_t, tensor, fold_batches, train_gen
+from utils import imread_rgb, log, log_detail, get_lab_indicators
+from utils import get_images_labels, get_similarities, embeddings_device_dim
+from utils import test_print_descriptor, choose_rand_neg, get_pos_couples
+from model.siamese import TuneClassifSub, RegionDescriptorNet
+from model.custom_modules import TripletLoss
 
 # keep labels as global variable. they are initialized after
 # train set has been loaded and then kept constant

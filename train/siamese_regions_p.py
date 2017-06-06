@@ -1,7 +1,7 @@
 # -*- encoding: utf-8 -*-
 
 from datetime import datetime
-from ..utils import *
+from utils import *
 
 # in AlexNet, there are 5 convolutional layers with parameters
 # and 3 FC layers in the classifier

@@ -5,7 +5,7 @@ import sys
 import tempfile
 import inspect
 from os import rename, path
-from . import trans_str, fun_str
+from general import trans_str, fun_str
 
 
 def match_label_fou_clean2(x):

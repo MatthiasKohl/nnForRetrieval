@@ -1,7 +1,7 @@
 # -*- encoding: utf-8 -*-
 
 from datetime import datetime
-from ..utils import *
+from utils import *
 
 # in AlexNet, there are 5 convolutional layers with parameters
 # and 3 FC layers in the classifier
@@ -48,8 +48,8 @@ class Params(object):
         self.train_batch_size = 32
         self.train_micro_batch = 0
         self.train_aug_rot = r = 180
-        self.train_aug_hrange = hr = 0
-        self.train_aug_vrange = vr = 0
+        self.train_aug_hrange = hr = 0.25
+        self.train_aug_vrange = vr = 0.25
         self.train_aug_hsrange = hsr = 0.25
         self.train_aug_vsrange = vsr = 0.25
         self.train_aug_hflip = hflip = True

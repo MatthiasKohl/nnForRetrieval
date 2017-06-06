@@ -5,7 +5,7 @@ import functools
 import torch.optim as optim
 from torch.autograd import Variable
 from model.nn_utils import set_net_train
-from . import log
+from params import log
 
 
 # Generic function to output the stats

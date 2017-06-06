@@ -9,11 +9,11 @@ import torchvision.models as models
 import torchvision.transforms as transforms
 from torch.autograd import Variable
 from classif_finetune_p import P
-from ..utils import move_device, tensor_t, tensor, fold_batches, train_gen
-from ..utils import imread_rgb, log, log_detail, test_print_classif
-from ..utils import test_print_descriptor, get_images_labels
-from ..model.siamese import TuneClassif
-from ..model.custom_modules import NormalizeL2Fun
+from utils import move_device, tensor_t, tensor, fold_batches, train_gen
+from utils import imread_rgb, log, log_detail, test_print_classif
+from utils import test_print_descriptor, get_images_labels
+from model.siamese import TuneClassif
+from model.custom_modules import NormalizeL2Fun
 
 # keep labels as global variable. they are initialized after
 # train set has been loaded and then kept constant

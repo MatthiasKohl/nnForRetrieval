@@ -4,10 +4,10 @@ import traceback
 import sys
 import getopt
 import torchvision.transforms as transforms
-from ..model.nn_utils import set_net_train
-from ..utils import *
-from ..train.siamese_regions import P, labels, test_classif_net
-from ..train.siamese_regions import get_embeddings, get_class_net
+from model.nn_utils import set_net_train
+from utils import *
+from train.siamese_regions import P, labels, test_classif_net
+from train.siamese_regions import get_embeddings, get_class_net
 
 
 # TODO !!!

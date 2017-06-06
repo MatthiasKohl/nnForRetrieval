@@ -3,7 +3,7 @@
 import torch
 from model.nn_utils import set_net_train
 from os import path
-from . import log, save_uuid, unique_str
+from params import log, save_uuid, unique_str
 
 
 # Generic function to test and print stats when training a classification net
