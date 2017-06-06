@@ -22,7 +22,7 @@ class Params(object):
     def __init__(self):
         # general parameters
         self.cnn_model = 'ResNet152'
-        self.dataset_full = 'data/pre_proc/fourviere_clean2_448'
+        self.dataset_full = 'data/pre_proc/CLICIDE_video_448'
         self.cuda_device = 0
         self.dataset_id = parse_dataset_id(self.dataset_full)
         self.mean_std_file = mean_std_files[self.dataset_id]
@@ -37,7 +37,7 @@ class Params(object):
 
         # Classification net general and test params
         self.preload_net = ''  # allows to continue training a network
-        self.bn_model = 'data/20170601-133538-276450_best_classif.pth.tar'
+        self.bn_model = 'data/final_classif_ft/cli_resnet152.pth.tar'
         self.test_upfront = True
         self.train = True
         self.test_pre_proc = True
@@ -47,7 +47,7 @@ class Params(object):
         self.train_epochs = 50
         self.train_batch_size = 32
         self.train_micro_batch = 1  # has to be 1
-        self.train_aug_rot = r = 180
+        self.train_aug_rot = r = 45
         self.train_aug_hrange = hr = 0
         self.train_aug_vrange = vr = 0
         self.train_aug_hsrange = hsr = 0.25
@@ -57,7 +57,7 @@ class Params(object):
         # list of transforms for all scales
         # the train_trans parameter should be a list of same
         # length representing the train transformation for each scale
-        self.train_sub_scales = [transforms.Compose([]), transforms.Compose([scale_cv(224)])]
+        self.train_sub_scales = [transforms.Compose([]), scale_cv(224)]
         # transformation for each scale
         self.train_trans = [trans, trans]
         self.train_pre_proc = [False, False]
