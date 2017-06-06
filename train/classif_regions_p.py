@@ -1,9 +1,7 @@
 # -*- encoding: utf-8 -*-
 
 from datetime import datetime
-from utils import read_mean_std, parse_dataset_id
-from utils_image import *
-from utils_params import *
+from ..utils import *
 
 # in AlexNet, there are 5 convolutional layers with parameters
 # and 3 FC layers in the classifier

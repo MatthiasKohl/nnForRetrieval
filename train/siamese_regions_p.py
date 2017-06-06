@@ -1,9 +1,7 @@
 # -*- encoding: utf-8 -*-
 
 from datetime import datetime
-from utils import read_mean_std, parse_dataset_id
-from utils_image import *
-from utils_params import *
+from ..utils import *
 
 # in AlexNet, there are 5 convolutional layers with parameters
 # and 3 FC layers in the classifier
@@ -42,14 +40,13 @@ class Params(object):
         self.classif_model = 'data/classif_subparts/20170601-163553-383107_best_classif.pth.tar'
         self.test_upfront = True
         self.train = True
-        self.test_batch_size = 32
         self.test_pre_proc = True
         self.test_trans = transforms.Compose([transforms.ToTensor(), transforms.Normalize(m, s)])
 
         # Classification net training params
         self.train_epochs = 20
         self.train_batch_size = 64
-        self.train_micro_batch = 16
+        self.train_micro_batch = 1  # has to be 1
         self.train_aug_rot = r = 180
         self.train_aug_hrange = hr = 0
         self.train_aug_vrange = vr = 0
@@ -62,7 +59,7 @@ class Params(object):
         self.train_trans = trans
         self.train_pre_proc = False
 
-        self.train_lr = 1e-3
+        self.train_lr = 1e-1
         self.train_momentum = 0.9
         self.train_weight_decay = 5e-4
         self.train_optim = 'SGD'
@@ -83,6 +80,9 @@ class Params(object):
         # the threshold (in Bytes) for embeddings to be computed on GPU
         self.embeddings_cuda_size = 2 ** 30
         self.feature_dim = 2048
+        self.regions_k = 6
+        self.train_loss2_alpha = 0.0
+        self.train_loss2_avg = True
         self.triplet_margin = 0.1
         # number of epochs after which semi-hard triplet choice switches
         # to hard triplet choice

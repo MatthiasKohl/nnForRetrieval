@@ -5,19 +5,16 @@ import random
 import numpy as np
 import torch
 import torch.optim as optim
-import torch.nn as nn
 import torchvision.models as models
 import torchvision.transforms as transforms
 from torch.autograd import Variable
 from siamese_descriptor_p import P
-from utils import move_device, tensor_t, tensor
-from utils_train import fold_batches, train_gen
-from utils_image import imread_rgb
-from utils_params import log, log_detail
-from utils_siamese import *
-from utils_dataset import get_images_labels, get_pos_couples, choose_rand_neg
-from model.siamese import TuneClassif, DescriptorNet
-from model.custom_modules import TripletLoss
+from ..utils import move_device, tensor_t, tensor, fold_batches, train_gen
+from ..utils import imread_rgb, log, log_detail, get_lab_indicators
+from ..utils import get_images_labels, get_similarities, embeddings_device_dim
+from ..utils import test_print_descriptor, choose_rand_neg, get_pos_couples
+from ..model.siamese import TuneClassif, DescriptorNet
+from ..model.custom_modules import TripletLoss
 
 # keep labels as global variable. they are initialized after
 # train set has been loaded and then kept constant

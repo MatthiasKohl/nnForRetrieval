@@ -4,15 +4,13 @@ import traceback
 import sys
 import getopt
 import torchvision.transforms as transforms
-from model.nn_utils import set_net_train
-from utils_dataset import get_images_labels
-from utils_image import imread_rgb
-from utils_metrics import precision1, mean_avg_precision
-from utils_params import *
-from utils import *
-from classif_finetune import P, labels, test_classif_net, get_embeddings, get_class_net
+from ..model.nn_utils import set_net_train
+from ..utils import *
+from ..train.siamese_descriptor import P, labels, test_classif_net
+from ..train.siamese_descriptor import get_embeddings, get_class_net
 
 
+# TODO !!!
 def usage():
     print('Usage: ' + sys.argv[0] + ' [options]')
     prefix = 'Options:\n\tRequired:\n'
@@ -25,15 +23,11 @@ def usage():
           'network trained for sub-region classification.\n')
     o4 = ('--device=\t<int>\tThe GPU device used for testing. ' +
           'If negative, CPU is used.\n')
-    o5 = ('--classify=\t<bool>\tTrue/yes/y/1 if the classification ' +
-          'feature should be tested. Otherwise, convolutional features ' +
-          'are tested.\n')
-    o6 = ('--batch=\t<int>\tThe batch size to use.\n')
-    o7 = '--help\t\tShow this help\n'
-    print(prefix + o1 + o2 + o3 + o4 + o5 + o6 + o7)
+    o5 = '--help\t\tShow this help\n'
+    print(prefix + o1 + o2 + o3 + o4 + o5)
 
 
-def main(dataset_full, model, weights, device, classify, batch_size):
+def main(dataset_full, model, weights, device):
     # training and test sets
     dataset_id = parse_dataset_id(dataset_full)
     match_labels = match_label_functions[dataset_id]
@@ -45,14 +39,10 @@ def main(dataset_full, model, weights, device, classify, batch_size):
     labels.extend(sorted(list(set(labels_list))))
     P.test_pre_proc = True  # we always pre process images
     P.cuda_device = device
-    P.image_input_size = image_sizes[dataset_id]
-    P.test_batch_size = batch_size
     P.preload_net = weights
     P.cnn_model = model
     P.feature_size2d = feature_sizes[model, image_sizes[dataset_id]]
-    P.embeddings_classify = classify
-    out_size = len(labels) if classify else flat_feature_sizes[model, P.image_input_size]
-    P.feature_dim = out_size
+    P.bn_model = ''  # only useful for training
 
     print('Loading and transforming train/test sets.')
 
@@ -76,8 +66,8 @@ def main(dataset_full, model, weights, device, classify, batch_size):
     set_net_train(class_net, False)
     c, t = test_classif_net(class_net, test_set)
     print('Classification (TEST): {0} / {1} - acc: {2:.4f}'.format(c, t, float(c) / t))
-    test_embeddings = get_embeddings(class_net, test_set, device, out_size)
-    ref_embeddings = get_embeddings(class_net, test_train_set, device, out_size)
+    test_embeddings = get_embeddings(class_net, test_set, device, len(labels))
+    ref_embeddings = get_embeddings(class_net, test_train_set, device, len(labels))
     sim = torch.mm(test_embeddings, ref_embeddings.t())
     prec1, c, t, _, _ = precision1(sim, test_set, test_train_set)
     mAP = mean_avg_precision(sim, test_set, test_train_set)
@@ -85,14 +75,13 @@ def main(dataset_full, model, weights, device, classify, batch_size):
 
 
 if __name__ == '__main__':
-    options_l = (['help', 'dataset=', 'model=', 'weights=', 'device=',
-                 'classify=', 'batch='])
+    options_l = (['help', 'dataset=', 'model=', 'weights=', 'device='])
     try:
         opts, args = getopt.getopt(sys.argv[1:], '', options_l)
     except getopt.GetoptError:
         usage()
         sys.exit(2)
-    dataset_full, model, weights, device, classify, batch_size = None, None, None, None, None, None
+    dataset_full, model, weights, device = None, None, None, None
     for opt, arg in opts:
         if opt in ('--help'):
             usage()
@@ -105,20 +94,15 @@ if __name__ == '__main__':
             weights = check_file(arg, 'initialization weights', True, usage)
         elif opt in ('--device'):
             device = check_int(arg, 'device', usage)
-        elif opt in ('--classify'):
-            classify = check_bool(arg, 'classify', usage)
-        elif opt in ('--batch'):
-            batch_size = check_int(arg, 'batch', usage)
     if (dataset_full is None or model is None or
-            weights is None or device is None or
-            classify is None or batch_size is None):
+            weights is None or device is None):
         print('One or more required arguments is missing.')
         usage()
         sys.exit(2)
 
     with torch.cuda.device(device):
         try:
-            main(dataset_full, model, weights, device, classify, batch_size)
+            main(dataset_full, model, weights, device)
         except:
             log_detail(P, None, traceback.format_exc())
             raise

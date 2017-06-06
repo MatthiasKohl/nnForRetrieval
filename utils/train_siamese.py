@@ -4,10 +4,8 @@ import torch
 import random
 from os import path
 from model.nn_utils import set_net_train
-from utils import tensor_t
-from utils_params import log, save_uuid, unique_str
-from utils_dataset import get_pos_couples
-from utils_metrics import precision1, mean_avg_precision
+from . import tensor_t, log, save_uuid, unique_str
+from . import get_pos_couples, precision1, mean_avg_precision
 
 
 # get byte tensors indicating the indexes of images having a different label

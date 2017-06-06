@@ -4,15 +4,12 @@ import traceback
 import sys
 import getopt
 import torchvision.transforms as transforms
-from model.nn_utils import set_net_train
-from utils_dataset import get_images_labels
-from utils_image import imread_rgb
-from utils_metrics import precision1, mean_avg_precision
-from utils_params import *
-from utils import *
-from classif_regions import P, labels, test_classif_net, get_embeddings, get_class_net
+from ..model.nn_utils import set_net_train
+from ..utils import *
+from ..train.classif_regions import P, labels, test_classif_net
+from ..train.classif_regions import get_embeddings, get_class_net
 
-# TODO !!!
+
 def usage():
     print('Usage: ' + sys.argv[0] + ' [options]')
     prefix = 'Options:\n\tRequired:\n'

@@ -1,9 +1,7 @@
 # -*- encoding: utf-8 -*-
 
 from datetime import datetime
-from utils import read_mean_std, parse_dataset_id
-from utils_image import *
-from utils_params import *
+from ..utils import *
 
 # in AlexNet, there are 5 convolutional layers with parameters
 # and 3 FC layers in the classifier
@@ -23,9 +21,9 @@ class Params(object):
 
     def __init__(self):
         # general parameters
-        self.cnn_model = 'ResNet152'
-        self.dataset_full = 'data/pre_proc/CLICIDE_video_224sq'
-        self.cuda_device = 1
+        self.cnn_model = 'AlexNet'
+        self.dataset_full = 'data/pre_proc/fourviere_clean2_224sq'
+        self.cuda_device = 0
         self.dataset_id = parse_dataset_id(self.dataset_full)
         self.mean_std_file = mean_std_files[self.dataset_id]
         self.match_labels = match_label_functions[self.dataset_id]
