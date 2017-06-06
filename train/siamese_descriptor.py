@@ -29,7 +29,7 @@ def get_embeddings(net, dataset, device, out_size):
 
     def batch(last, i, is_final, batch):
         embeddings = last
-        test_in = tensor(P.cuda_device, *P.image_input_size)
+        test_in = tensor(P.cuda_device, len(batch), *P.image_input_size)
         for j, (im, _, _) in enumerate(batch):
             test_in[j] = test_trans(im)
         out = net(Variable(test_in, volatile=True)).data
@@ -203,7 +203,7 @@ def main():
         log(P, 'Finished region-descriptor training')
     if P.test_descriptor_net:
         log(P, 'Testing as descriptor')
-        test_print_descriptor(train_type, P, class_net, testset_tuple, get_embeddings)
+        test_print_descriptor(train_type, P, siam_net, testset_tuple, get_embeddings)
 
 
 if __name__ == '__main__':

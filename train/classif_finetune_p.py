@@ -21,9 +21,9 @@ class Params(object):
 
     def __init__(self):
         # general parameters
-        self.cnn_model = 'ResNet152'
-        self.dataset_full = 'data/pre_proc/fourviere_clean2_224sq'
-        self.cuda_device = 1
+        self.cnn_model = 'AlexNet'
+        self.dataset_full = 'data/pre_proc/CLICIDE_video_224sq'
+        self.cuda_device = 0
         self.dataset_id = parse_dataset_id(self.dataset_full)
         self.mean_std_file = mean_std_files[self.dataset_id]
         self.match_labels = match_label_functions[self.dataset_id]
