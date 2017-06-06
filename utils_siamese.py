@@ -34,7 +34,7 @@ def embeddings_device_dim(P, net, n, sim_matrix=False):
     # but it could be CPU if embeddings/number of items are too large
     device = P.cuda_device
     out_size = P.feature_dim
-    if hasattr(net, 'feature_size'):
+    if hasattr(net, 'feature_size') and out_size <= 0:
         out_size = net.feature_size
     if n * out_size * 4 > P.embeddings_cuda_size:
         device = -1
