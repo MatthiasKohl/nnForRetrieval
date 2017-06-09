@@ -60,12 +60,12 @@ class Params(object):
         self.train_trans = trans
         self.train_pre_proc = False
 
-        self.train_lr = 5e-2
+        self.train_lr = 1e-3
         self.train_momentum = 0.9
         self.train_weight_decay = 5e-4
         self.train_optim = 'SGD'
         self.train_annealing = {}
-        self.train_loss_avg = True
+        self.train_loss_avg = False
         self.train_loss_int = 10
         self.train_test_int = 0
         # the batch norm layer cannot be trained if the micro-batch size

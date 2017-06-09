@@ -21,8 +21,8 @@ class Params(object):
 
     def __init__(self):
         # general parameters
-        self.cnn_model = 'AlexNet'
-        self.dataset_full = 'data/pre_proc/fourviere_clean2_384'
+        self.cnn_model = 'ResNet152'
+        self.dataset_full = 'data/pre_proc/fourviere_clean2_448'
         self.cuda_device = 0
         self.dataset_id = parse_dataset_id(self.dataset_full)
         self.mean_std_file = mean_std_files[self.dataset_id]
@@ -37,7 +37,7 @@ class Params(object):
 
         # Classification net general and test params
         self.preload_net = ''  # allows to continue training a network
-        self.bn_model = 'data/final_classif_ft/fou_alexnet.pth.tar'
+        self.bn_model = 'data/final_classif_ft/fou_resnet152.pth.tar'
         self.test_upfront = True
         self.train = True
         self.test_pre_proc = True

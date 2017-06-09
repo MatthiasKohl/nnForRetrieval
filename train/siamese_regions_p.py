@@ -21,8 +21,8 @@ class Params(object):
 
     def __init__(self):
         # general parameters
-        self.cnn_model = 'AlexNet'
-        self.dataset_full = 'data/pre_proc/fourviere_clean2_448'
+        self.cnn_model = 'ResNet152'
+        self.dataset_full = 'data/pre_proc/CLICIDE_video_448'
         self.cuda_device = 0
         self.dataset_id = parse_dataset_id(self.dataset_full)
         self.mean_std_file = mean_std_files[self.dataset_id]
@@ -37,7 +37,7 @@ class Params(object):
 
         # Classification net general and test params
         self.preload_net = ''  # allows to continue training a network
-        self.classif_model = 'data/final_classif_sub/fou_alexnet.pth.tar'
+        self.classif_model = 'data/final_classif_sub/cli_resnet152.pth.tar'
         self.test_upfront = True
         self.train = True
         self.test_pre_proc = True
@@ -59,12 +59,12 @@ class Params(object):
         self.train_trans = trans
         self.train_pre_proc = False
 
-        self.train_lr = 5e-3
+        self.train_lr = 1e-4
         self.train_momentum = 0.9
-        self.train_weight_decay = 5e-4
+        self.train_weight_decay = 0.
         self.train_optim = 'SGD'
         self.train_annealing = {}
-        self.train_loss_avg = True
+        self.train_loss_avg = False
         self.train_loss_int = 10
         self.train_test_int = 0
         # the batch norm layer cannot be trained if the micro-batch size
@@ -80,8 +80,8 @@ class Params(object):
         # the threshold (in Bytes) for embeddings to be computed on GPU
         self.embeddings_cuda_size = 2 ** 30
         self.feature_dim = 2048
-        self.regions_k = 8
-        self.train_loss2_alpha = 0.02
+        self.regions_k = 4
+        self.train_loss2_alpha = 1.0
         self.train_loss2_avg = True
         self.triplet_margin = 0.1
         # number of epochs after which semi-hard triplet choice switches
