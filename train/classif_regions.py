@@ -8,21 +8,17 @@ import torch.nn as nn
 import torchvision.models as models
 import torchvision.transforms as transforms
 from torch.autograd import Variable
-from classif_regions_anet_p import P
-from utils import move_device, tensor_t, tensor
-from utils_train import fold_batches, train_gen
-from utils_image import imread_rgb
-from utils_params import log, log_detail
-from utils_classif import test_print_classif
-from utils_siamese import test_print_descriptor
-from utils_dataset import get_images_labels
+from classif_regions_p import P
+from utils import move_device, tensor_t, tensor, fold_batches, train_gen
+from utils import imread_rgb, log, log_detail, test_print_classif
+from utils import test_print_descriptor, get_images_labels
 from model.siamese import TuneClassif, TuneClassifSub
 from model.custom_modules import NormalizeL2Fun
 
 # keep labels as global variable. they are initialized after
 # train set has been loaded and then kept constant
 labels = []
-train_type = 'AlexNet Classification sub-regions'
+train_type = P.cnn_model.lower() + ' Classification sub-regions'
 
 
 # test a classifier model. it should be in eval mode
@@ -73,41 +69,43 @@ def train_classif_subparts(net, train_set, testset_tuple, criterion, optimizer, 
         # each image/batch is composed of multiple scales
         n_sc = len(batch[0][0])
         train_in_scales = []
+        labels_in = tensor_t(torch.LongTensor, P.cuda_device, 1)
+        labels_in.fill_(labels.index(batch[0][1]))
         for j in range(n_sc):
             im = trans_scales[j](batch[0][0][j])
-            train_in = tensor(P.cuda_device, 1, *im.size())
+            train_in = move_device(im.unsqueeze(0), P.cuda_device)
             train_in_scales.append(train_in)
-        labels_in = tensor_t(torch.LongTensor, P.cuda_device, 1)
-        labels_in[0] = labels.index(batch[0][1])
         return train_in_scales, [labels_in]
 
     def create_loss(scales_out, labels_list):
         # scales_out is a list over all scales,
         # with all sub-region classifications for each scale
         labels_in = labels_list[0]
-        max_size = max(t_out.size(2) * t_out.size(3) for t_out in scales_out)
-        loss = criterion(scales_out[0][:, :, 0, 0], labels_in)
+        loss = None
         for s, t_out in enumerate(scales_out):
-            # the scaling factor for this scale. it is simply the ratio
-            # of the maximal spatial size over the spatial size of this
-            # scale
-            sc = max_size / float(t_out.size(2) * t_out.size(3))
-            for i in range(t_out.size(2)):
-                for j in range(t_out.size(3)):
-                    if s == 0 and i == 0 and j == 0:
-                        continue
-                    loss += sc * criterion(t_out[:, :, i, j], labels_in)
+            # batch size is 1, only consider this output
+            t_out0 = t_out[0]
+            # all spatial outputs are of shape (num_classes, width, height)
+            # make a 'batch' as follows: (width * height, num_classes)
+            # then apply loss to the whole batch, and accumulate over scales
+            t_out_all = t_out0.view(t_out0.size(0), -1).t()
+            if loss is None:
+                loss = criterion(t_out_all, labels_in.expand(t_out_all.size(0)))
+            else:
+                loss += criterion(t_out_all, labels_in.expand(t_out_all.size(0)))
         if P.train_loss_avg:
-            loss /= float(max_size * len(scales_out))
+            loss /= len(scales_out)
         return loss, None
 
-    train_gen(train_type, P, test_print_classif, test_classif_net, net, train_set, testset_tuple, optimizer, create_epoch, create_batch, create_loss, best_score=best_score)
+    train_gen(train_type, P, test_print_classif, test_classif_net, net,
+              train_set, testset_tuple, optimizer, create_epoch, create_batch,
+              create_loss, best_score=best_score)
 
 
 # get the embeddings as the normalized output of the classification
 # values where the highest maximal activation occurred
 def get_embeddings(net, dataset, device, out_size):
-    test_trans = P.test_pre_proc
+    test_trans = P.test_trans
     if P.test_pre_proc:
         test_trans = transforms.Compose([])
 
@@ -135,12 +133,15 @@ def get_embeddings(net, dataset, device, out_size):
 
 
 def get_class_net():
+    model = models.alexnet
+    if P.cnn_model.lower() == 'resnet152':
+        model = models.resnet152
     if P.bn_model:
-        bn_model = TuneClassif(models.alexnet(), len(labels), P.feature_size2d)
+        bn_model = TuneClassif(model(), len(labels))
         bn_model.load_state_dict(torch.load(P.bn_model, map_location=lambda storage, location: storage.cpu()))
         # copy_bn_all(net.features, bn_model.features)
     else:
-        bn_model = models.alexnet(pretrained=True)
+        bn_model = model(pretrained=True)
     net = TuneClassifSub(bn_model, len(labels), P.feature_size2d, untrained=P.untrained_blocks)
     if P.preload_net:
         net.load_state_dict(torch.load(P.preload_net, map_location=lambda storage, location: storage.cpu()))
@@ -156,23 +157,21 @@ def main():
     labels_list = [t[1] for t in train_set_full]
     # we have to give a number to each label,
     # so we need a list here for the index
-    labels.extend(set(labels_list))
+    labels.extend(sorted(list(set(labels_list))))
 
     log(P, 'Loading and transforming train/test sets.')
 
     # open the images (and transform already if possible)
     # do that only if it fits in memory !
     train_set, test_train_set, test_set = [], [], []
-    train_pre_f = [t if pre_proc else None for t, pre_proc in zip(P.train_trans, P.train_pre_proc)]
-    test_pre_f = P.test_trans if P.test_pre_proc else None
+    train_pre_f = [t if pre_proc else transforms.Compose([]) for t, pre_proc in zip(P.train_trans, P.train_pre_proc)]
+    test_pre_f = P.test_trans if P.test_pre_proc else transforms.Compose([])
     train_scales = P.train_sub_scales
     for im, lab in train_set_full:
         im_o = imread_rgb(im)
         scales = [t(im_o) for t in train_scales]
         train_set.append((scales, lab, im))
         for j, t in enumerate(train_pre_f):
-            if t is None:
-                continue
             scales[j] = t(scales[j])
         im_pre_test = test_pre_f(im_o) if test_pre_f else im_o
         test_train_set.append((im_pre_test, lab, im))
@@ -181,8 +180,7 @@ def main():
         if lab not in labels:
             continue
         im_o = imread_rgb(im)
-        im_pre = test_pre_f(im_o) if test_pre_f else im_o
-        test_set.append((im_pre, lab, im))
+        test_set.append((test_pre_f(im_o), lab, im))
 
     class_net = get_class_net()
     optimizer = optim.SGD((p for p in class_net.parameters() if p.requires_grad), lr=P.train_lr, momentum=P.train_momentum, weight_decay=P.train_weight_decay)
