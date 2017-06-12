@@ -122,8 +122,7 @@ if __name__ == '__main__':
         elif opt in ('--dba'):
             dba = check_int(arg, 'dba', usage)
     if (dataset_full is None or model is None or
-            weights is None or device is None or
-            classify is None or batch_size is None):
+            device is None or classify is None or batch_size is None):
         print('One or more required arguments is missing.')
         usage()
         sys.exit(2)
