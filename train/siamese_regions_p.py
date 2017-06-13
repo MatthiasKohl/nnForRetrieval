@@ -80,7 +80,7 @@ class Params(object):
         # the threshold (in Bytes) for embeddings to be computed on GPU
         self.embeddings_cuda_size = 2 ** 30
         self.feature_dim = 2048
-        self.regions_k = 4
+        self.regions_k = 6
         self.train_loss2_alpha = 1.0
         self.train_loss2_avg = True
         self.triplet_margin = 0.1
