@@ -8,6 +8,7 @@ from model.nn_utils import set_net_train
 from utils import *
 from train.classif_finetune import P, labels, test_classif_net
 from train.classif_finetune import get_embeddings, get_class_net
+from instance_avg import instance_avg
 
 
 def usage():
@@ -26,11 +27,13 @@ def usage():
           'feature should be tested. Otherwise, convolutional features ' +
           'are tested.\n')
     o6 = ('--batch=\t<int>\tThe batch size to use.\n')
-    o7 = '--help\t\tShow this help\n'
-    print(prefix + o1 + o2 + o3 + o4 + o5 + o6 + o7)
+    o7 = ('--dba=\t<int>\tUse DBA with given k. If k = 0, do not use DBA. ' +
+          'If k<0, use all neighbors within the same instance.\n')
+    o8 = '--help\t\tShow this help\n'
+    print(prefix + o1 + o2 + o3 + o4 + o5 + o6 + o7 + o8)
 
 
-def main(dataset_full, model, weights, device, classify, batch_size):
+def main(dataset_full, model, weights, device, classify, batch_size, dba):
     # training and test sets
     dataset_id = parse_dataset_id(dataset_full)
     match_labels = match_label_functions[dataset_id]
@@ -78,18 +81,28 @@ def main(dataset_full, model, weights, device, classify, batch_size):
     sim = torch.mm(test_embeddings, ref_embeddings.t())
     prec1, c, t, _, _ = precision1(sim, test_set, test_train_set)
     mAP = mean_avg_precision(sim, test_set, test_train_set)
-    print('Descriptor (TEST): {0} / {1} - acc: {2:.4f} - mAP:{3:.4f}\n'.format(c, t, prec1, mAP))
+    print('Descriptor (TEST): {0} / {1} - acc: {2:.4f} - mAP:{3:.4f}'.format(c, t, prec1, mAP))
+    if dba == 0:
+        return
+    print('Testing using instance feature augmentation')
+    dba_embeddings, dba_set = instance_avg(device, ref_embeddings,
+                                           test_train_set, labels, dba)
+    sim = torch.mm(test_embeddings, dba_embeddings.t())
+    prec1, c, t, _, _ = precision1(sim, test_set, dba_set)
+    mAP = mean_avg_precision(sim, test_set, dba_set)
+    print('Descriptor (TEST DBA k={4}): {0} / {1} - acc: {2:.4f} - mAP:{3:.4f}'.format(c, t, prec1, mAP, dba))
 
 
 if __name__ == '__main__':
     options_l = (['help', 'dataset=', 'model=', 'weights=', 'device=',
-                 'classify=', 'batch='])
+                 'classify=', 'batch=', 'dba='])
     try:
         opts, args = getopt.getopt(sys.argv[1:], '', options_l)
     except getopt.GetoptError:
         usage()
         sys.exit(2)
-    dataset_full, model, weights, device, classify, batch_size = None, None, None, None, None, None
+    dataset_full, model, weights, device = None, None, None, None
+    classify, batch_size, dba = None, None, -1
     for opt, arg in opts:
         if opt in ('--help'):
             usage()
@@ -106,16 +119,18 @@ if __name__ == '__main__':
             classify = check_bool(arg, 'classify', usage)
         elif opt in ('--batch'):
             batch_size = check_int(arg, 'batch', usage)
+        elif opt in ('--dba'):
+            dba = check_int(arg, 'dba', usage)
     if (dataset_full is None or model is None or
-            weights is None or device is None or
-            classify is None or batch_size is None):
+            device is None or classify is None or batch_size is None):
         print('One or more required arguments is missing.')
         usage()
         sys.exit(2)
 
     with torch.cuda.device(device):
         try:
-            main(dataset_full, model, weights, device, classify, batch_size)
+            main(dataset_full, model, weights, device, classify,
+                 batch_size, dba)
         except:
             log_detail(P, None, traceback.format_exc())
             raise

@@ -86,9 +86,8 @@ def get_embeddings(net, dataset, device, out_size):
 
     if not P.embeddings_classify:
         # remove classifier and add back later
-        classifier, reduc = net.classifier, net.feature_reduc
+        classifier = net.classifier
         net.classifier = nn.Sequential()
-        net.feature_reduc = nn.Sequential()
 
     def batch(last, i, is_final, batch):
         embeddings = last
@@ -108,7 +107,6 @@ def get_embeddings(net, dataset, device, out_size):
     embeddings = fold_batches(batch, init, dataset, P.test_batch_size)
     if not P.embeddings_classify:
         net.classifier = classifier
-        net.feature_reduc = reduc
     return embeddings
 
 

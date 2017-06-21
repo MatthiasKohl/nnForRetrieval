@@ -203,7 +203,8 @@ def main():
         log(P, 'Finished region-descriptor training')
     if P.test_descriptor_net:
         log(P, 'Testing as descriptor')
-        test_print_descriptor(train_type, P, siam_net, testset_tuple, get_embeddings)
+        # set best score high enough such that it will never be saved
+        test_print_descriptor(train_type, P, siam_net, testset_tuple, get_embeddings, best_score=len(test_set) + 1)
 
 
 if __name__ == '__main__':
