@@ -1,9 +1,12 @@
 # -*- encoding: utf-8 -*-
 
+from __future__ import print_function
+import sys
+import tempfile
+import inspect
 import types
 import torch
 import os
-import sys
 
 
 # to check an option specifying a file that should or should not exist
@@ -101,3 +104,58 @@ def tensor_t(t, device, *sizes):
 
 def tensor(device, *sizes):
     return tensor_t(torch.Tensor, device, *sizes)
+
+
+def unique_str(P):
+    return P.uuid.strftime('%Y%m%d-%H%M%S-%f')
+
+
+def save(P, f, prefix):
+    f.write('{0}\n\n'.format(prefix))
+    # for name, value in sorted(vars(P).items()):
+    #     if name == 'uuid':
+    #         continue
+    #     if name in ('test_trans', 'train_trans', 'train_sub_scales'):
+    #         if type(value) is list or type(value) is tuple:
+    #             value = ', '.join(trans_str(t) for t in value)
+    #         else:
+    #             value = trans_str(value)
+    #     elif name in ('match_labels_f'):
+    #         value = fun_str(value)
+    #     f.write('{0}:{1}\n'.format(name, value))
+    f.write(inspect.getsource(P.__class__))
+    f.close()
+
+
+def save_uuid(P, prefix):
+    f = tempfile.NamedTemporaryFile(dir=P.save_dir, delete=False)
+    save(P, f, prefix)
+    # the following will not work on Windows (would need to add a remove first)
+    os.rename(f.name, os.path.join(P.save_dir, unique_str(P) + '.params'))
+
+
+def log_detail(P, p_file, *args):
+    if p_file:
+        print(*args, file=p_file)
+    if P.log_file:
+        with open(P.log_file, 'a') as f:
+            print(*args, file=f)
+
+
+def log(P, *args):
+    log_detail(P, sys.stdout, *args)
+
+
+def mod_param(p_file, param, new_value):
+    with open(p_file) as f_in:
+        with open(p_file + '.tmp', 'w') as f_out:
+            for line in f_in:
+                if (line.strip().startswith('self.' + param) and
+                        len(line.split('=')) == 2):
+                    new_line = (line.split('=')[0] + '= \'' +
+                                new_value + '\'\n')
+                    f_out.write(new_line)
+                else:
+                    f_out.write(line)
+    # as above, in Windows a remove would be needed first
+    os.rename(p_file + '.tmp', p_file)

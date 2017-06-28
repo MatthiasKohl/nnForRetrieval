@@ -5,7 +5,7 @@ import random
 from os import path
 from model.nn_utils import set_net_train
 from general import tensor_t
-from params import log, save_uuid, unique_str
+from general import log, save_uuid, unique_str
 from dataset import get_pos_couples
 from metrics import precision1, mean_avg_precision
 
