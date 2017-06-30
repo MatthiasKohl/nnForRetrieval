@@ -5,7 +5,7 @@ import random
 from os import path
 from model.nn_utils import set_net_train
 from general import tensor_t
-from params import log, save_uuid, unique_str
+from general import log, save_uuid, unique_str
 from dataset import get_pos_couples
 from metrics import precision1, mean_avg_precision
 
@@ -110,7 +110,7 @@ def test_print_descriptor(train_type, P, net, testset_tuple, get_embeddings, bes
     # as highest should almost certainly be the same image)
     # choose train samples with at least 2 other images for the query
     couples = get_pos_couples(test_ref_set)
-    train_test_set = random.sample(test_ref_set, 200)
+    train_test_set = random.sample(test_ref_set, max(1, len(test_ref_set) // 10))
     train_test_set = filter(lambda x: len(couples[x[1]]) >= 3, train_test_set)
     prec1, correct, tot, sum_pos, sum_neg, sum_max, mAP, _ = test_descriptor_net(P, get_embeddings, net, train_test_set, test_ref_set, kth=2)
     num_pos = sum(test_label == ref_label for _, test_label, _ in train_test_set for _, ref_label, _ in test_ref_set)

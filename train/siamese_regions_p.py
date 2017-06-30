@@ -1,7 +1,8 @@
 # -*- encoding: utf-8 -*-
 
 from datetime import datetime
-from utils import *
+from utils import *  # image transforms, general utilities
+from global_p import *  # global config
 
 # in AlexNet, there are 5 convolutional layers with parameters
 # and 3 FC layers in the classifier
@@ -25,11 +26,25 @@ class Params(object):
         self.dataset_full = 'data/pre_proc/CLICIDE_video_448'
         self.cuda_device = 0
         self.dataset_id = parse_dataset_id(self.dataset_full)
+        # the file containing mean and standard deviation values
+        # for a new dataset, simply use the filename here or add it to the
+        # global_p module parameters
+        # (this is valid for the following parameters, too)
         self.mean_std_file = mean_std_files[self.dataset_id]
+        # the function for obtaining labels from a filename in the dataset
+        # this function takes a filename and returns a unique label
         self.match_labels = match_label_functions[self.dataset_id]
+        # input size. this is usually always (3, 224, 224) unless larger
+        # fixed-size images should be used
         self.image_input_size = image_sizes[self.dataset_id]
+        # the number of different labels in the dataset
         self.num_classes = num_classes[self.dataset_id]
+        # the 2D size of the convolutional features of the base network
         self.feature_size2d = feature_sizes[(self.cnn_model.lower(), self.image_input_size)]
+        # the number of blocks in the base network that should not be trained
+        # (starting from the lowest and going to higher layers/blocks)
+        # usually, block represents a layer with parameters,
+        # for ResNet or equivalent, block is a whole block of layers
         self.untrained_blocks = untrained_blocks[self.cnn_model.lower()]
 
         # read mean and standard of dataset here to define transforms already
